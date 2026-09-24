@@ -4,106 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>沿線施設サーチャー</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        /* デモモード用マップのスタイル */
-        #map.demo-mode {
-            background-color: #f3f4f6;
-            background-image: 
-                linear-gradient(#e5e7eb 1px, transparent 1px),
-                linear-gradient(90deg, #e5e7eb 1px, transparent 1px);
-            background-size: 20px 20px;
-            position: relative;
-            overflow: hidden;
-        }
-        .demo-watermark {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 4rem;
-            color: rgba(156, 163, 175, 0.2);
-            font-weight: bold;
-            pointer-events: none;
-            white-space: nowrap;
-            z-index: 0;
-        }
-        .demo-marker {
-            position: absolute;
-            transform: translate(-50%, -100%);
-            cursor: pointer;
-            z-index: 10;
-            transition: transform 0.2s;
-        }
-        .demo-marker:hover {
-            transform: translate(-50%, -100%) scale(1.2);
-        }
-        .demo-infowindow {
-            position: absolute;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transform: translate(-50%, -100%);
-            margin-top: -35px; /* マーカーの上に配置 */
-            z-index: 20;
-            min-width: 150px;
-            pointer-events: auto;
-        }
-        .demo-infowindow::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 8px 8px 0;
-            border-style: solid;
-            border-color: white transparent transparent transparent;
-        }
-        .demo-route-svg {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-    </style>
 </head>
 <body class="bg-gray-50 h-screen flex flex-col text-gray-800 font-sans overflow-hidden">
 
-    <!-- Header -->
     <header class="bg-blue-600 text-white p-4 shadow-md z-20 flex-shrink-0">
         <h1 class="text-xl font-bold flex items-center">
             <i class="fa-solid fa-route mr-2"></i> 沿線施設サーチャー
         </h1>
-        <p class="text-xs text-blue-200 mt-1">駅の経路沿いにある目的の施設を一括検索</p>
+        <p class="text-xs text-blue-200 mt-1">駅の経路沿いにある目的の施設を一括検索（経路は道路ベースの近似）</p>
     </header>
 
-    <!-- Main Container -->
     <main class="flex-1 flex flex-col md:flex-row overflow-hidden">
-        
-        <!-- Left Panel: Form & List -->
         <div class="w-full md:w-96 bg-white shadow-lg z-10 flex flex-col h-full flex-shrink-0">
-            <!-- Search Form -->
             <div class="p-4 border-b">
                 <div class="space-y-3">
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1">出発駅</label>
                         <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fa-solid fa-train text-gray-400"></i>
-                            </div>
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-train text-gray-400"></i></div>
                             <input type="text" id="origin" value="名鉄岐阜駅" class="pl-10 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition">
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1">到着駅</label>
                         <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fa-solid fa-flag-checkered text-gray-400"></i>
-                            </div>
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-flag-checkered text-gray-400"></i></div>
                             <input type="text" id="destination" value="塩釜口駅" class="pl-10 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition">
                         </div>
                     </div>
@@ -111,9 +38,7 @@
                         <div class="flex-1">
                             <label class="block text-xs font-medium text-gray-500 mb-1">検索キーワード</label>
                             <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
-                                </div>
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fa-solid fa-magnifying-glass text-gray-400"></i></div>
                                 <input type="text" id="keyword" value="本屋" class="pl-10 w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none transition">
                             </div>
                         </div>
@@ -128,269 +53,47 @@
                 </div>
             </div>
 
-            <!-- Loading Indicator -->
             <div id="loading" class="hidden p-8 text-center text-gray-500">
                 <i class="fa-solid fa-spinner fa-spin text-3xl mb-2 text-blue-500"></i>
                 <p class="text-sm">検索中...</p>
             </div>
 
-            <!-- Results List -->
             <div id="resultsList" class="flex-1 overflow-y-auto p-2 bg-gray-50">
-                <div class="h-full flex items-center justify-center text-gray-400 text-sm">
-                    検索ボタンを押して開始してください
-                </div>
+                <div class="h-full flex items-center justify-center text-gray-400 text-sm">検索ボタンを押して開始してください</div>
             </div>
         </div>
 
-        <!-- Right Panel: Map -->
         <div class="flex-1 relative h-64 md:h-auto border-t md:border-t-0 md:border-l border-gray-200">
             <div id="map" class="w-full h-full"></div>
-            <!-- API Status Badge -->
-            <div id="apiStatus" class="absolute top-4 right-4 bg-white px-3 py-1 rounded-full shadow-md text-xs font-bold border z-30">
-                Loading...
-            </div>
         </div>
     </main>
 
     <script>
-        // ============================================================================
-        // [設定] Google Maps API キー
-        // ============================================================================
-        // 実際のAPIキーをお持ちの場合は、下の文字列を置き換えてください。
-        // 'YOUR_GOOGLE_MAPS_API_KEY' のままであれば、デモモード（モック）で動作します。
-        const API_KEY = 'AIzaSyA4yfpP87sOej0ZfbiVM9N1gSgw7nycxW0'; 
-        const IS_DEMO_MODE = false;
+        // Google Maps APIキー（自分のキーに置き換えてください）
+        const API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY';
 
-        // グローバル変数（Google Maps インスタンス類）
-        let map;
-        let directionsService;
-        let directionsRenderer;
-        let placesService;
+        // 検索地点の最大数（増やすと取りこぼしが減るが、API呼び出しも増える）
+        const MAX_POINTS = 10;
+
+        let map, directionsService, directionsRenderer, placesService, infoWindow;
         let markers = [];
-        let infoWindow;
-        let currentPlaces = [];
 
-        // ============================================================================
-        // デモモード（モック）用クラス定義
-        // ※ 実際のGoogle Maps APIのインターフェースを模倣し、コード変更なしで動作させます
-        // ============================================================================
-        if (IS_DEMO_MODE) {
-            window.google = {
-                maps: {
-                    Map: class {
-                        constructor(element, options) {
-                            this.element = element;
-                            this.element.classList.add('demo-mode');
-                            this.element.innerHTML = '<div class="demo-watermark">DEMO MAP</div><svg class="demo-route-svg" id="demoSvg"></svg>';
-                            this.center = options.center || { lat: 35.18, lng: 136.9 };
-                            this.zoom = options.zoom || 10;
-                            // デモ用の緯度経度から%への変換（名鉄岐阜～塩釜口付近をカバー）
-                            this.bounds = { minLat: 35.1, maxLat: 35.45, minLng: 136.7, maxLng: 137.0 };
-                        }
-                        setCenter(latLng) { this.center = latLng; }
-                        setZoom(zoom) { this.zoom = zoom; }
-                        latLngToPercent(lat, lng) {
-                            const y = 100 - ((lat - this.bounds.minLat) / (this.bounds.maxLat - this.bounds.minLat) * 100);
-                            const x = ((lng - this.bounds.minLng) / (this.bounds.maxLng - this.bounds.minLng) * 100);
-                            return { x, y };
-                        }
-                    },
-                    Marker: class {
-                        constructor(options) {
-                            this.position = options.position;
-                            this.map = options.map;
-                            this.title = options.title;
-                            this.listeners = {};
-                            this.element = null;
-                            
-                            if (this.map) this.setMap(this.map);
-                        }
-                        setMap(map) {
-                            if (this.element && this.element.parentNode) {
-                                this.element.parentNode.removeChild(this.element);
-                            }
-                            this.map = map;
-                            if (map) {
-                                this.element = document.createElement('div');
-                                this.element.className = 'demo-marker text-red-500 text-3xl drop-shadow-md';
-                                this.element.innerHTML = '<i class="fa-solid fa-location-dot"></i>';
-                                this.element.title = this.title || '';
-                                
-                                const pos = map.latLngToPercent(this.position.lat, this.position.lng);
-                                this.element.style.left = `${pos.x}%`;
-                                this.element.style.top = `${pos.y}%`;
-                                
-                                this.element.addEventListener('click', () => {
-                                    if (this.listeners['click']) this.listeners['click']();
-                                });
-                                map.element.appendChild(this.element);
-                            }
-                        }
-                        addListener(event, callback) { this.listeners[event] = callback; }
-                    },
-                    InfoWindow: class {
-                        constructor() {
-                            this.content = '';
-                            this.element = null;
-                        }
-                        setContent(content) { this.content = content; }
-                        open(map, marker) {
-                            this.close();
-                            this.element = document.createElement('div');
-                            this.element.className = 'demo-infowindow';
-                            this.element.innerHTML = this.content;
-                            
-                            const pos = map.latLngToPercent(marker.position.lat, marker.position.lng);
-                            this.element.style.left = `${pos.x}%`;
-                            this.element.style.top = `${pos.y}%`;
-                            
-                            map.element.appendChild(this.element);
-                            
-                            // 簡易的なクリックで閉じる処理
-                            setTimeout(() => {
-                                document.addEventListener('click', this.closeHandler.bind(this), { once: true });
-                            }, 100);
-                        }
-                        close() {
-                            if (this.element && this.element.parentNode) {
-                                this.element.parentNode.removeChild(this.element);
-                            }
-                            document.removeEventListener('click', this.closeHandler);
-                        }
-                        closeHandler(e) {
-                            if (!this.element.contains(e.target)) this.close();
-                        }
-                    },
-                    DirectionsService: class {
-                        route(request, callback) {
-                            // デモ用の固定ルート（岐阜 -> 名古屋 -> 塩釜口）
-                            setTimeout(() => {
-                                const response = {
-                                    routes: [{
-                                        legs: [{
-                                            steps: [
-                                                { end_location: { lat: 35.4117, lng: 136.7616 } }, // 名鉄岐阜
-                                                { end_location: { lat: 35.1695, lng: 136.8839 } }, // 名鉄名古屋
-                                                { end_location: { lat: 35.1328, lng: 136.9818 } }  // 塩釜口
-                                            ]
-                                        }]
-                                    }]
-                                };
-                                callback(response, 'OK');
-                            }, 500);
-                        }
-                    },
-                    DirectionsRenderer: class {
-                        setMap(map) { this.map = map; }
-                        setDirections(response) {
-                            if (!this.map) return;
-                            const svg = document.getElementById('demoSvg');
-                            if (!svg) return;
-                            svg.innerHTML = ''; // クリア
-                            const steps = response.routes[0].legs[0].steps;
-                            
-                            let pathD = '';
-                            steps.forEach((step, index) => {
-                                const pos = this.map.latLngToPercent(step.end_location.lat, step.end_location.lng);
-                                if (index === 0) pathD += `M ${pos.x}% ${pos.y}% `;
-                                else pathD += `L ${pos.x}% ${pos.y}% `;
-                            });
-                            
-                            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                            path.setAttribute("d", pathD);
-                            path.setAttribute("stroke", "#3b82f6"); // blue-500
-                            path.setAttribute("stroke-width", "4");
-                            path.setAttribute("fill", "none");
-                            path.setAttribute("stroke-opacity", "0.6");
-                            svg.appendChild(path);
-                        }
-                    },
-                    places: {
-                        PlacesService: class {
-                            constructor(map) { this.map = map; }
-                            nearbySearch(request, callback) {
-                                // デモ用の架空店舗データ
-                                const mockData = [
-                                    { place_id: 'm1', name: '岐阜 駅前書店', geometry: { location: { lat: 35.412, lng: 136.760 } }, vicinity: '岐阜県岐阜市神田町', rating: 4.2 },
-                                    { place_id: 'm2', name: 'ブックス ギフ', geometry: { location: { lat: 35.409, lng: 136.762 } }, vicinity: '岐阜県岐阜市加納', rating: 3.8 },
-                                    { place_id: 'm3', name: '名古屋 ブックセンター', geometry: { location: { lat: 35.170, lng: 136.884 } }, vicinity: '愛知県名古屋市中村区', rating: 4.5 },
-                                    { place_id: 'm4', name: '名駅 書房', geometry: { location: { lat: 35.172, lng: 136.882 } }, vicinity: '愛知県名古屋市中村区', rating: 4.0 },
-                                    { place_id: 'm5', name: '塩釜口 キャンパス書店', geometry: { location: { lat: 35.133, lng: 136.980 } }, vicinity: '愛知県名古屋市天白区', rating: 4.1 },
-                                    { place_id: 'm6', name: '天白堂 書店', geometry: { location: { lat: 35.131, lng: 136.983 } }, vicinity: '愛知県名古屋市天白区', rating: 3.5 }
-                                ];
-                                
-                                // リクエストの座標（location）に近いものをフィルタして返す（簡易距離判定）
-                                setTimeout(() => {
-                                    const reqLat = request.location.lat();
-                                    const reqLng = request.location.lng();
-                                    const results = mockData.filter(place => {
-                                        // 緯度経度の差が0.05以内ならヒットとする簡易判定
-                                        return Math.abs(place.geometry.location.lat - reqLat) < 0.05 &&
-                                               Math.abs(place.geometry.location.lng - reqLng) < 0.05;
-                                    }).map(p => ({
-                                        ...p,
-                                        geometry: { location: { 
-                                            lat: () => p.geometry.location.lat, 
-                                            lng: () => p.geometry.location.lng,
-                                            lat_val: p.geometry.location.lat, // for demo logic
-                                            lng_val: p.geometry.location.lng
-                                        }}
-                                    }));
-                                    callback(results, 'OK');
-                                }, 300);
-                            }
-                        }
-                    },
-                    event: {
-                        trigger: (instance, eventName) => {
-                            if (instance.listeners && instance.listeners[eventName]) {
-                                instance.listeners[eventName]();
-                            }
-                        }
-                    }
-                }
-            };
-        }
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-        // ============================================================================
-        // アプリケーションロジック
-        // ============================================================================
-
-        // 初期化処理
         function initMap() {
-            // ステータスバッジの更新
-            const badge = document.getElementById('apiStatus');
-            if (IS_DEMO_MODE) {
-                badge.textContent = 'Demo Mode';
-                badge.className = 'absolute top-4 right-4 bg-yellow-100 text-yellow-800 border-yellow-300 px-3 py-1 rounded-full shadow-md text-xs font-bold border z-30';
-            } else {
-                badge.textContent = 'Live API';
-                badge.className = 'absolute top-4 right-4 bg-green-100 text-green-800 border-green-300 px-3 py-1 rounded-full shadow-md text-xs font-bold border z-30';
-            }
-
-            // 地図の初期化 (名古屋付近を中心に)
-            const mapOptions = {
+            map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: 35.1815, lng: 136.9066 },
                 zoom: 11,
                 mapTypeControl: false,
                 streetViewControl: false,
-            };
-            map = new google.maps.Map(document.getElementById('map'), mapOptions);
-
-            // サービスの初期化
-            directionsService = new google.maps.DirectionsService();
-            directionsRenderer = new google.maps.DirectionsRenderer({
-                map: map,
-                suppressMarkers: false // 出発・到着マーカーを表示
             });
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
             placesService = new google.maps.places.PlacesService(map);
             infoWindow = new google.maps.InfoWindow();
-
-            // イベントリスナーの登録
             document.getElementById('searchBtn').addEventListener('click', performSearch);
         }
 
-        // 検索実行
         function performSearch() {
             const origin = document.getElementById('origin').value;
             const destination = document.getElementById('destination').value;
@@ -405,34 +108,23 @@
             toggleLoading(true);
             clearResults();
 
-            // 1. 経路を検索
-            const request = {
+            // 日本ではTRANSIT(電車)の経路がAPIで取得できないため、車の経路で代用
+            directionsService.route({
                 origin: origin,
                 destination: destination,
-                travelMode: 'TRANSIT' // 電車を想定
-            };
-
-            directionsService.route(request, (response, status) => {
+                travelMode: 'DRIVING'
+            }, (response, status) => {
                 if (status === 'OK') {
                     directionsRenderer.setDirections(response);
-                    
-                    // 2. 経路上のポイントを抽出（各ステップの終点）
-                    const route = response.routes[0];
-                    const legs = route.legs[0];
+
+                    // 経路全体から等間隔に検索地点を取る
+                    const path = response.routes[0].overview_path;
+                    const n = Math.min(MAX_POINTS, path.length);
                     const searchPoints = [];
-                    
-                    // 出発地点を追加
-                    searchPoints.push(legs.start_location || { 
-                        lat: () => legs.steps[0].end_location.lat, 
-                        lng: () => legs.steps[0].end_location.lng 
-                    });
-
-                    // 各ステップの終点を追加
-                    legs.steps.forEach(step => {
-                        searchPoints.push(step.end_location);
-                    });
-
-                    // 3. 各ポイント周辺で Places 検索を実行
+                    for (let i = 0; i < n; i++) {
+                        const idx = n === 1 ? 0 : Math.round(i * (path.length - 1) / (n - 1));
+                        searchPoints.push(path[idx]);
+                    }
                     searchPlacesAlongRoute(searchPoints, keyword, radius);
                 } else {
                     toggleLoading(false);
@@ -441,26 +133,15 @@
             });
         }
 
-        // 経路上での施設検索
         async function searchPlacesAlongRoute(points, keyword, radius) {
             const allResults = [];
             const seenPlaceIds = new Set();
+            let lastError = null;
 
-            // APIのレート制限（OVER_QUERY_LIMIT）を避けるため、ポイント数を間引くか遅延を入れる
-            // 今回はデモと実用を兼ねて、最大5ポイント程度に絞る
-            const maxPoints = 5;
-            const step = Math.max(1, Math.floor(points.length / maxPoints));
-            const selectedPoints = points.filter((_, i) => i % step === 0).slice(0, maxPoints);
-
-            // 直列で検索を実行（並列だとAPI制限に引っかかりやすいため）
-            for (let i = 0; i < selectedPoints.length; i++) {
-                const point = selectedPoints[i];
-                // Google Maps API (Lat/Lng) とモックでインターフェースを吸収
-                const location = IS_DEMO_MODE ? 
-                    { lat: () => point.lat, lng: () => point.lng } : point;
-
+            // レート制限を避けるため直列で実行
+            for (const point of points) {
                 try {
-                    const results = await searchNearby(location, keyword, radius);
+                    const results = await searchNearby(point, keyword, radius);
                     results.forEach(place => {
                         if (!seenPlaceIds.has(place.place_id)) {
                             seenPlaceIds.add(place.place_id);
@@ -468,25 +149,22 @@
                         }
                     });
                 } catch (err) {
+                    lastError = err;
                     console.warn('Place search error:', err);
                 }
             }
 
             toggleLoading(false);
-            currentPlaces = allResults;
-            renderResults(currentPlaces);
+            if (allResults.length === 0 && lastError) {
+                showError(`施設検索に失敗しました: ${lastError}`);
+                return;
+            }
+            renderResults(allResults);
         }
 
-        // Places API のラッパー（Promise化）
         function searchNearby(location, keyword, radius) {
             return new Promise((resolve, reject) => {
-                const request = {
-                    location: location,
-                    radius: radius,
-                    keyword: keyword
-                };
-                
-                placesService.nearbySearch(request, (results, status) => {
+                placesService.nearbySearch({ location, radius, keyword }, (results, status) => {
                     if (status === 'OK' || status === 'ZERO_RESULTS') {
                         resolve(results || []);
                     } else {
@@ -496,7 +174,6 @@
             });
         }
 
-        // 結果の描画
         function renderResults(places) {
             const listContainer = document.getElementById('resultsList');
             listContainer.innerHTML = '';
@@ -513,63 +190,36 @@
             const ul = document.createElement('ul');
             ul.className = 'space-y-2';
 
-            places.forEach((place, index) => {
-                // リストアイテムの作成
+            places.forEach(place => {
                 const li = document.createElement('li');
                 li.className = 'bg-white p-3 rounded-lg border shadow-sm hover:shadow-md hover:border-blue-300 cursor-pointer transition flex flex-col';
-                
-                const ratingHtml = place.rating ? 
-                    `<span class="text-yellow-500 text-xs"><i class="fa-solid fa-star"></i> ${place.rating}</span>` : 
-                    '<span class="text-gray-400 text-xs">評価なし</span>';
+
+                const ratingHtml = place.rating
+                    ? `<span class="text-yellow-500 text-xs"><i class="fa-solid fa-star"></i> ${place.rating}</span>`
+                    : '<span class="text-gray-400 text-xs">評価なし</span>';
 
                 li.innerHTML = `
-                    <div class="font-bold text-gray-800 truncate" title="${place.name}">${place.name}</div>
-                    <div class="text-xs text-gray-500 mt-1 truncate"><i class="fa-solid fa-location-dot mr-1"></i>${place.vicinity || '住所不明'}</div>
-                    <div class="mt-2">${ratingHtml}</div>
-                `;
+                    <div class="font-bold text-gray-800 truncate" title="${esc(place.name)}">${esc(place.name)}</div>
+                    <div class="text-xs text-gray-500 mt-1 truncate"><i class="fa-solid fa-location-dot mr-1"></i>${esc(place.vicinity) || '住所不明'}</div>
+                    <div class="mt-2">${ratingHtml}</div>`;
 
-                // マーカーの作成
-                // デモモード特有の座標取り出しに対応
-                let position;
-                if (IS_DEMO_MODE && place.geometry.location.lat_val) {
-                    position = { lat: place.geometry.location.lat_val, lng: place.geometry.location.lng_val };
-                } else {
-                    position = place.geometry.location;
-                }
-
-                const marker = new google.maps.Marker({
-                    map: map,
-                    position: position,
-                    title: place.name
-                });
+                const position = place.geometry.location;
+                const marker = new google.maps.Marker({ map: map, position: position, title: place.name });
                 markers.push(marker);
 
-                // インフォウィンドウのコンテンツ
                 const infoContent = `
-                    <div class="text-sm font-bold text-gray-800 mb-1">${place.name}</div>
-                    <div class="text-xs text-gray-600">${place.vicinity || ''}</div>
-                `;
+                    <div class="text-sm font-bold text-gray-800 mb-1">${esc(place.name)}</div>
+                    <div class="text-xs text-gray-600">${esc(place.vicinity)}</div>`;
 
-                // マーカークリックイベント
                 marker.addListener('click', () => {
                     infoWindow.setContent(infoContent);
                     infoWindow.open(map, marker);
-                    // マーカーをクリックしたらリスト側も強調表示する等の処理を入れることも可能
                 });
 
-                // リストアイテムクリックイベント（地図連動）
                 li.addEventListener('click', () => {
-                    // マップを移動
-                    if (map.panTo) {
-                        map.panTo(position);
-                    } else {
-                        map.setCenter(position);
-                    }
+                    map.panTo(position);
                     map.setZoom(15);
-                    // マーカーのクリックイベントを発火して吹き出しを開く
                     google.maps.event.trigger(marker, 'click');
-
-                    // 選択状態のスタイリング
                     document.querySelectorAll('#resultsList li').forEach(el => el.classList.remove('border-blue-500', 'bg-blue-50'));
                     li.classList.add('border-blue-500', 'bg-blue-50');
                 });
@@ -580,50 +230,33 @@
             listContainer.appendChild(ul);
         }
 
-        // ユーティリティ
         function clearResults() {
             markers.forEach(marker => marker.setMap(null));
             markers = [];
-            currentPlaces = [];
             document.getElementById('resultsList').innerHTML = '';
             infoWindow.close();
         }
 
         function toggleLoading(show) {
-            const loading = document.getElementById('loading');
-            const list = document.getElementById('resultsList');
-            if (show) {
-                loading.classList.remove('hidden');
-                list.classList.add('hidden');
-            } else {
-                loading.classList.add('hidden');
-                list.classList.remove('hidden');
-            }
+            document.getElementById('loading').classList.toggle('hidden', !show);
+            document.getElementById('resultsList').classList.toggle('hidden', show);
         }
 
         function showError(msg) {
             const listContainer = document.getElementById('resultsList');
             listContainer.innerHTML = `
                 <div class="p-4 bg-red-100 text-red-700 rounded-md border border-red-300">
-                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> ${msg}
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> ${esc(msg)}
                 </div>`;
             listContainer.classList.remove('hidden');
         }
 
-        // ============================================================================
-        // ブートストラップ (API読み込み)
-        // ============================================================================
-        if (IS_DEMO_MODE) {
-            // デモモードの場合はDOMContentLoadedで直接初期化
-            document.addEventListener('DOMContentLoaded', initMap);
-        } else {
-            // 実際のAPIキーがある場合はスクリプトを動的に読み込む
-            const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=initMap`;
-            script.async = true;
-            script.defer = true;
-            document.head.appendChild(script);
-        }
+        // Google Maps APIの読み込み
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=initMap`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
     </script>
 </body>
 </html>
