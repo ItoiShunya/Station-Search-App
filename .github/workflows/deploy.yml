@@ -1,0 +1,30 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate config.js from secrets
+        run: |
+          echo "const CONFIG = {" > config.js
+          echo "    GEMINI_API_KEY: \"${{ secrets.GEMINI_API_KEY }}\"," >> config.js
+          echo "    GOOGLE_MAPS_API_KEY: \"${{ secrets.GOOGLE_MAPS_API_KEY }}\"," >> config.js
+          echo "};" >> config.js
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
